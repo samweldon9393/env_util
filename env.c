@@ -33,23 +33,7 @@ static char **copy_env(char **env) {
     return env_copy;
 }
 
-
-/* API functions */
-
-void initmap(hashmap *hm) {
-    memset(&hm->table, 0, sizeof(node *) * MAP_SIZE);
-    pthread_mutex_init(&hm->mutex, (void *)0);
-}
-
-void destroymap(hashmap *hm) {
-    pthread_mutex_lock(&hm->mutex);
-    for (int i = 0 ; i < MAP_SIZE ; i++)
-        freelist(hm->table[i]);
-    pthread_mutex_unlock(&hm->mutex);
-    free(hm);
-}
-
-int hash(const char *key) {
+static int hash(const char *key) {
     int hashval = 0;
     int len = strlen(key);
     for (int i = 0 ; i < len ; i++)
@@ -61,6 +45,13 @@ int hash(const char *key) {
 
     return hashval;
 }
+
+static void initmap(hashmap *hm) {
+    memset(&hm->table, 0, sizeof(node *) * MAP_SIZE);
+    pthread_mutex_init(&hm->mutex, (void *)0);
+}
+
+/* API functions */
 
 void hm_put(hashmap *hm, char *key, char *value) {
     pthread_mutex_lock(&hm->mutex);
@@ -105,7 +96,7 @@ const char *hm_get(hashmap *hm, const char *key) {
     return ret;
 }
 
-hashmap *get_env_hm(char **env) {
+hashmap *hm_create(char **env) {
 
     char **env_copy = copy_env(env);
     hashmap *hm     = malloc(sizeof(hashmap));
@@ -120,4 +111,12 @@ hashmap *get_env_hm(char **env) {
 
     free(env_copy);
     return hm;
+}
+
+void hm_destroy(hashmap *hm) {
+    pthread_mutex_lock(&hm->mutex);
+    for (int i = 0 ; i < MAP_SIZE ; i++)
+        freelist(hm->table[i]);
+    pthread_mutex_unlock(&hm->mutex);
+    free(hm);
 }

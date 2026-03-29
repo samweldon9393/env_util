@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall -Werror -pedantic-errors
 
-env_driver: env.a
+example: env.a
 
 env.a: env.o env.h
 	ar rcs env.a env.o

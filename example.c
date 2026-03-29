@@ -7,6 +7,11 @@ int main(int argc, char **argv, char **env) {
     printf("Current shell is %s\n", hm_get(hm, "SHELL"));
     printf("Current user is %s\n", hm_get(hm, "LOGNAME"));
 
+    hm_put(hm, "SHELL", "bob");
+    hm_put(hm, "LOGNAME", "alice");
+    printf("New shell is %s\n", hm_get(hm, "SHELL"));
+    printf("New logname is %s\n", hm_get(hm, "LOGNAME"));
+
     hm_destroy(hm);
     return 0;
 }

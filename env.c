@@ -1,6 +1,7 @@
 #include "env.h"
 
 #define MAP_SIZE 100
+#define are_same_alloc(k, v) ((v - k) == (strlen(k) + 1))
 
 /* Static helper functions */
 
@@ -8,7 +9,11 @@ static void freelist(node *cur) {
     if (cur == NULL)
         return;
     node *next = cur->next;
-    free(cur->key);
+    if (cur->key) {
+        if (!are_same_alloc(cur->key, cur->value))
+            free(cur->value);
+        free(cur->key);
+    }
     free(cur);
     freelist(next);
 }
@@ -20,17 +25,6 @@ static node *alloc_node(char *key, char *value) {
     n->value = value;
     n->next = NULL;
     return n;
-}
-static char **copy_env(char **env) {
-    int len = 0;
-    for (char **e = env; *e; e++)
-        len++;
-
-    char **env_copy = malloc(sizeof(char *) * (len + 1));
-    for (int i = 0 ; i < len ; i++)
-        env_copy[i] = strdup(env[i]);
-    env_copy[len] = NULL;
-    return env_copy;
 }
 
 static int hash(const char *key) {
@@ -54,24 +48,40 @@ static void initmap(hashmap *hm) {
 /* API functions */
 
 void hm_put(hashmap *hm, char *key, char *value) {
-    pthread_mutex_lock(&hm->mutex);
-    int idx = hash(key);
-
+    int idx;
     node *cur, *prev = NULL;
+    pthread_mutex_lock(&hm->mutex);
+
+    key = strdup(key);
+    if (value == NULL) {
+        key = strtok(key, "=");
+        value = strtok(NULL, "=");
+    }
+    else
+        value = strdup(value);
+    idx = hash(key);
+
     for (cur = hm->table[idx];
             cur && strcmp(cur->key, key) != 0;
             cur = cur->next) {
         prev = cur;
     }
 
-    if (prev == NULL) {
+    /* New entry in new list, don't need to free anything */
+    if (cur == NULL && prev == NULL) {
         hm->table[idx] = alloc_node(key, value);
     }
-    else if (cur && strcmp(cur->key, key) == 0) {
-        cur->value = value;
-    }
-    else {
+    /* New entry at end of a list, don't need to free anything */
+    else if (!cur) {
         prev->next = alloc_node(key, value);
+    }
+    /* Replacing a value of an existing key, free the new key and old value */
+    else {
+        if (!are_same_alloc(key, value))
+            free(key);
+        if (!are_same_alloc(cur->key, cur->value))
+            free(cur->value);
+        cur->value = value;
     }
     pthread_mutex_unlock(&hm->mutex);
 }
@@ -98,18 +108,14 @@ const char *hm_get(hashmap *hm, const char *key) {
 
 hashmap *hm_create(char **env) {
 
-    char **env_copy = copy_env(env);
-    hashmap *hm     = malloc(sizeof(hashmap));
+    hashmap *hm = malloc(sizeof(hashmap));
     initmap(hm);
 
-    for (char **e = env_copy; *e; e++) {
-        char *key = strtok(*e, "=");
-        char *value = strtok(NULL, "=");
-        if (key)
-            hm_put(hm, key, value);
+    for (char **e = env; *e; e++) {
+        if (*e)
+            hm_put(hm, *e, NULL);
     }
 
-    free(env_copy);
     return hm;
 }
 

@@ -15,6 +15,7 @@ typedef struct node {
 
 typedef struct hashmap {
     node                *table[MAP_SIZE];
+    size_t              size;
     pthread_mutex_t     mutex;
 } hashmap;
 
@@ -27,6 +28,11 @@ void hm_put(hashmap *hm, char *key, char *value);
  * Get the value for a given key. NULL if key not in map.
  */
 const char *hm_get(hashmap *hm, const char *key);
+
+/*
+ * Get the current size of the hashmap
+ */
+size_t hm_size(hashmap *hm);
 
 /*
  * Create a hashmap from a program's environment pointer

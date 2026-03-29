@@ -1,6 +1,5 @@
 #include "env.h"
 
-#define MAP_SIZE 100
 #define are_same_alloc(k, v) ((v - k) == (strlen(k) + 1))
 
 /* Static helper functions */
@@ -43,6 +42,7 @@ static int hash(const char *key) {
 static void initmap(hashmap *hm) {
     memset(&hm->table, 0, sizeof(node *) * MAP_SIZE);
     pthread_mutex_init(&hm->mutex, (void *)0);
+    hm->size = 0;
 }
 
 /* API functions */
@@ -83,6 +83,8 @@ void hm_put(hashmap *hm, char *key, char *value) {
             free(cur->value);
         cur->value = value;
     }
+
+    hm->size++;
     pthread_mutex_unlock(&hm->mutex);
 }
 
@@ -105,6 +107,8 @@ const char *hm_get(hashmap *hm, const char *key) {
     pthread_mutex_unlock(&hm->mutex);
     return ret;
 }
+
+size_t hm_size(hashmap *hm) { return hm->size; }
 
 hashmap *hm_create(char **env) {
 

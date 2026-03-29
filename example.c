@@ -4,6 +4,7 @@
 int main(int argc, char **argv, char **env) {
     hashmap *hm = hm_create(env);
 
+    printf("Current hashmap size is %ld\n", hm_size(hm));
     printf("Current shell is %s\n", hm_get(hm, "SHELL"));
     printf("Current user is %s\n", hm_get(hm, "LOGNAME"));
 
@@ -11,6 +12,7 @@ int main(int argc, char **argv, char **env) {
     hm_put(hm, "LOGNAME", "alice");
     printf("New shell is %s\n", hm_get(hm, "SHELL"));
     printf("New logname is %s\n", hm_get(hm, "LOGNAME"));
+    printf("Current hashmap size is %ld\n", hm_size(hm));
 
     hm_destroy(hm);
     return 0;

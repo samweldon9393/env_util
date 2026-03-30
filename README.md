@@ -10,7 +10,7 @@ When a C program receives its environment as a `char **env` array, each entry is
 
 ```c
 // Load the process environment into a new heap-allocated hashmap
-hashmap *get_env_hm(char **env);
+hashmap *hm_create(char **env);
 
 // Look up a variable — returns NULL if not found
 const char *hm_get(hashmap *hm, const char *key);
@@ -22,7 +22,7 @@ size_t hm_size(hashmap *hm);
 void hm_put(hashmap *hm, char *key, char *value);
 
 // Free all memory and destroy the mutex
-void destroymap(hashmap *hm);
+void hm_destroy(hashmap *hm);
 ```
 
 ## Building
